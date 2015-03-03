@@ -8,8 +8,13 @@
 
 #include "crypto/common.h"
 
+#include "chainparams.h"
+#include "consensus/consensus.h"
+#include "consensus/validation.h"
 #include "key.h"
 #include "main.h"
+#include "miner.h"
+#include "pubkey.h"
 #include "random.h"
 #include "txdb.h"
 #include "txmempool.h"
@@ -31,7 +36,7 @@ ZCJoinSplit *pzcashParams;
 extern bool fPrintToConsole;
 extern void noui_connect();
 
-JoinSplitTestingSetup::JoinSplitTestingSetup()
+JoinSplitTestingSetup::JoinSplitTestingSetup(CBaseChainParams::Network network) : BasicTestingSetup(network)
 {
     boost::filesystem::path pk_path = ZC_GetParamsDir() / "sprout-proving.key";
     boost::filesystem::path vk_path = ZC_GetParamsDir() / "sprout-verifying.key";
@@ -43,21 +48,23 @@ JoinSplitTestingSetup::~JoinSplitTestingSetup()
     delete pzcashParams;
 }
 
-BasicTestingSetup::BasicTestingSetup()
+BasicTestingSetup::BasicTestingSetup(CBaseChainParams::Network network)
 {
     assert(init_and_check_sodium() != -1);
     ECC_Start();
     SetupEnvironment();
     fPrintToDebugLog = false; // don't want to write to debug.log file
     fCheckBlockIndex = true;
-    SelectParams(CBaseChainParams::MAIN);
+    SelectParams(network);
+    noui_connect();
 }
+
 BasicTestingSetup::~BasicTestingSetup()
 {
     ECC_Stop();
 }
 
-TestingSetup::TestingSetup()
+TestingSetup::TestingSetup(CBaseChainParams::Network network) : JoinSplitTestingSetup(network)
 {
 #ifdef ENABLE_WALLET
         bitdb.MakeMock();
@@ -101,6 +108,53 @@ TestingSetup::~TestingSetup()
         bitdb.Reset();
 #endif
         boost::filesystem::remove_all(pathTemp);
+}
+
+TestChain100Setup::TestChain100Setup() : TestingSetup(CBaseChainParams::REGTEST)
+{
+    // Generate a 100-block chain:
+    coinbaseKey.MakeNewKey(true);
+    CScript scriptPubKey = CScript() <<  ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
+    for (int i = 0; i < COINBASE_MATURITY; i++)
+    {
+        std::vector<CMutableTransaction> noTxns;
+        CBlock b = CreateAndProcessBlock(noTxns, scriptPubKey);
+        coinbaseTxns.push_back(b.vtx[0]);
+    }
+}
+
+//
+// Create a new block with just given transactions, coinbase paying to
+// scriptPubKey, and try to add it to the current chain.
+//
+CBlock
+TestChain100Setup::CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const CScript& scriptPubKey)
+{
+    CBlockTemplate *pblocktemplate = CreateNewBlock(scriptPubKey);
+    CBlock& block = pblocktemplate->block;
+
+    // Replace mempool-selected txns with just coinbase plus passed-in txns:
+    block.vtx.resize(1);
+    BOOST_FOREACH(const CMutableTransaction& tx, txns)
+        block.vtx.push_back(tx);
+    // IncrementExtraNonce creates a valid coinbase and merkleRoot
+    unsigned int extraNonce = 0;
+    IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
+
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params(CBaseChainParams::REGTEST).GetConsensus())) {
+        block.nNonce = ArithToUint256(UintToArith256(block.nNonce) + 1);
+    }
+
+    CValidationState state;
+    ProcessNewBlock(state, NULL, &block, true, NULL);
+
+    CBlock result = block;
+    delete pblocktemplate;
+    return result;
+}
+
+TestChain100Setup::~TestChain100Setup()
+{
 }
 
 
