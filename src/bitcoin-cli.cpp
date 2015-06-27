@@ -21,6 +21,7 @@
 
 using namespace std;
 
+static const char DEFAULT_RPCCONNECT[] = "127.0.0.1";
 static const int DEFAULT_HTTP_CLIENT_TIMEOUT=900;
 
 std::string HelpMessageCli()
@@ -28,10 +29,10 @@ std::string HelpMessageCli()
     string strUsage;
     strUsage += HelpMessageGroup(_("Options:"));
     strUsage += HelpMessageOpt("-?", _("This help message"));
-    strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), "zcash.conf"));
+    strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), BITCOIN_CONF_FILENAME));
     strUsage += HelpMessageOpt("-datadir=<dir>", _("Specify data directory"));
     AppendParamsHelpMessages(strUsage);
-    strUsage += HelpMessageOpt("-rpcconnect=<ip>", strprintf(_("Send commands to node running on <ip> (default: %s)"), "127.0.0.1"));
+    strUsage += HelpMessageOpt("-rpcconnect=<ip>", strprintf(_("Send commands to node running on <ip> (default: %s)"), DEFAULT_RPCCONNECT));
     strUsage += HelpMessageOpt("-rpcport=<port>", strprintf(_("Connect to JSON-RPC on <port> (default: %u or testnet: %u)"), 8232, 18232));
     strUsage += HelpMessageOpt("-rpcwait", _("Wait for RPC server to start"));
     strUsage += HelpMessageOpt("-rpcuser=<user>", _("Username for JSON-RPC connections"));
@@ -175,7 +176,7 @@ static void http_error_cb(enum evhttp_request_error err, void *ctx)
 
 UniValue CallRPC(const string& strMethod, const UniValue& params)
 {
-    std::string host = GetArg("-rpcconnect", "127.0.0.1");
+    std::string host = GetArg("-rpcconnect", DEFAULT_RPCCONNECT);
     int port = GetArg("-rpcport", BaseParams().RPCPort());
 
     // Obtain event base
