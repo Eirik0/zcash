@@ -100,7 +100,7 @@ bool AppInit(int argc, char* argv[])
         }
         try
         {
-            ReadConfigFile(mapArgs, mapMultiArgs);
+            ReadConfigFile(GetArg("-conf", BITCOIN_CONF_FILENAME), mapArgs, mapMultiArgs);
         } catch (const missing_zcash_conf& e) {
             fprintf(stderr,
                 (_("Before starting zcashd, you need to create a configuration file:\n"
@@ -115,7 +115,7 @@ bool AppInit(int argc, char* argv[])
                    "depending on how you installed Zcash:\n") +
                  _("- Source code:  %s\n"
                    "- .deb package: %s\n")).c_str(),
-                GetConfigFile().string().c_str(),
+                GetConfigFile(GetArg("-conf", BITCOIN_CONF_FILENAME)).string().c_str(),
                 "contrib/debian/examples/zcash.conf",
                 "/usr/share/doc/zcash/examples/zcash.conf");
             return false;
@@ -124,8 +124,10 @@ bool AppInit(int argc, char* argv[])
             return false;
         }
         // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
-        if (!SelectParamsFromCommandLine()) {
-            fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
+        try {
+            SelectParams(ChainNameFromCommandLine());
+        } catch(std::exception &e) {
+            fprintf(stderr, "Error: %s\n", e.what());
             return false;
         }
 
@@ -166,6 +168,9 @@ bool AppInit(int argc, char* argv[])
 #endif
         SoftSetBoolArg("-server", true);
 
+        // Set this early so that parameter interactions go to console
+        InitLogging();
+        InitParameterInteraction();
         fRet = AppInit2(threadGroup, scheduler);
     }
     catch (const std::exception& e) {
