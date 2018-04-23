@@ -113,3 +113,4 @@ libzcashconsensus.pc
 
 contrib/debian/files
 contrib/debian/substvars
+zcash_stats*

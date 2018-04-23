@@ -14,10 +14,17 @@
 #include "sync.h"
 #include "util.h"
 
+#include <pwd.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <univalue.h>
 
+#include <boost/filesystem.hpp>
+
+#include <fstream>
+#include <iostream>
 #include <regex>
 
 using namespace std;
@@ -627,6 +634,93 @@ UniValue verifychain(const UniValue& params, bool fHelp)
         nCheckDepth = params[1].get_int();
 
     return CVerifyDB().VerifyDB(pcoinsTip, nCheckLevel, nCheckDepth);
+}
+
+UniValue getblockstatistics(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() < 2 || params.size() > 2)
+        throw runtime_error(
+            "getblockstatistics ( outputFile minBlockHeight maxBlockHeight )\n"
+            "\nReturns statistics for a given block height.\n"
+            "\nArguments:\n"
+            "1. outputFilePath    (string, required) A directory to put the file stats.txt in.\n"
+            "2. minBlockHeight    (numeric, required) The minimum block height to return statistics for.\n"
+            "3. maxBlockHeight    (numeric, optional) The maximum block height to return statistics for.\n"
+        );
+
+    LOCK(cs_main);
+
+    std::string outputFilePath = params[0].get_str();
+
+    int chainHeight = chainActive.Height();
+
+    int minBlockHeight = params[1].get_int();
+    minBlockHeight = std::min(minBlockHeight, chainHeight); // min must be <= chain height
+
+    int maxBlockHeight;
+    if (params.size() == 3) {
+        maxBlockHeight = params[2].get_int();
+        maxBlockHeight = std::max(maxBlockHeight, minBlockHeight); // max must be >= min
+        maxBlockHeight = std::min(maxBlockHeight, chainHeight); // max must be <= chain height
+    } else {
+        maxBlockHeight = chainHeight;
+    }
+
+    boost::filesystem::create_directories(outputFilePath);
+    std::ofstream statsFile;
+    statsFile.open(outputFilePath + "/stats.txt", std::fstream::out);
+    
+    int txWritten = 0;
+    UniValue ret(UniValue::VOBJ);
+    
+    statsFile << "blockHeight,blockTime,txId,isCoinBase,numVIn,totalVIn,numVOut,totalVOut,numJS,totalJSIn,totalJSOut,type" << std::endl;
+
+    for (int blockHeight = minBlockHeight; blockHeight <= maxBlockHeight; blockHeight++) {
+        CBlock block;
+        CBlockIndex* pblockindex = chainActive[blockHeight];
+
+        if (fHavePruned && !(pblockindex->nStatus & BLOCK_HAVE_DATA) && pblockindex->nTx > 0)
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "Block not available (pruned data) " + blockHeight);
+
+        if(!ReadBlockFromDisk(block, pblockindex))
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "Can't read block from disk " + blockHeight);
+
+        for (const CTransaction& tx : block.vtx) {
+            CAmount total_vIn = 0;
+            // TODO in
+            CAmount total_vOut = 0;
+            for (CTxOut out : tx.vout) {
+                total_vOut += out.nValue;
+            }
+            CAmount total_jsIn = 0;
+            CAmount total_jsOut = 0;
+            for (JSDescription jsd : tx.vjoinsplit) {
+                total_jsIn += jsd.vpub_new;
+                total_jsOut += jsd.vpub_old;
+            }
+            std::string type;
+            if (tx.vjoinsplit.size() == 0)
+                type = "tt";
+            else if (tx.vin.size() == 0 && tx.vout.size() == 0)
+                type = "zz";
+            else if (total_jsIn == 0)
+                type = "tz";
+            else
+                type = "zt";
+            statsFile << blockHeight << "," << block.GetBlockTime() << "," << tx.GetHash().GetHex() << "," << (tx.IsCoinBase() ? "true" : "false") << ","
+                      << tx.vin.size() << "," << total_vIn  << "X,"
+                      << tx.vout.size() << "," << total_vOut << ","
+                      << tx.vjoinsplit.size() << "," << total_jsIn << "," << total_jsOut << "," 
+                      << type << std::endl;
+            ++txWritten;
+        }
+    }
+
+    statsFile.close();
+
+    ret.push_back(Pair("num_txs", txWritten));
+
+    return ret;
 }
 
 /** Implementation of IsSuperMajority with better feedback */
