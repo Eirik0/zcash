@@ -638,7 +638,7 @@ UniValue verifychain(const UniValue& params, bool fHelp)
 
 UniValue getblockstatistics(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() < 2 || params.size() > 2)
+    if (fHelp || params.size() < 2 || params.size() > 3)
         throw runtime_error(
             "getblockstatistics ( outputFile minBlockHeight maxBlockHeight )\n"
             "\nReturns statistics for a given block height.\n"
