@@ -641,7 +641,7 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
     if (fHelp || params.size() < 2 || params.size() > 3)
         throw runtime_error(
             "getblockstatistics ( outputFile minBlockHeight maxBlockHeight )\n"
-            "\nReturns statistics for a given block height.\n"
+            "\nReturns statistics for a given block range.\n"
             "\nArguments:\n"
             "1. outputFilePath    (string, required) A directory to put the file stats.txt in.\n"
             "2. minBlockHeight    (numeric, required) The minimum block height to return statistics for.\n"
@@ -654,14 +654,11 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
 
     int chainHeight = chainActive.Height();
 
-    int minBlockHeight = params[1].get_int();
-    minBlockHeight = std::min(minBlockHeight, chainHeight); // min must be <= chain height
+    int minBlockHeight = std::max(0, std::min(params[1].get_int(), chainHeight)); // 0 <= min <= chain height
 
     int maxBlockHeight;
     if (params.size() == 3) {
-        maxBlockHeight = params[2].get_int();
-        maxBlockHeight = std::max(maxBlockHeight, minBlockHeight); // max must be >= min
-        maxBlockHeight = std::min(maxBlockHeight, chainHeight); // max must be <= chain height
+        maxBlockHeight = std::min(std::max(minBlockHeight, params[2].get_int()), chainHeight); // min <= max <= chain height
     } else {
         maxBlockHeight = chainHeight;
     }
