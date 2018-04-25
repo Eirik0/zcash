@@ -670,7 +670,7 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
     int txWritten = 0;
     UniValue ret(UniValue::VOBJ);
     
-    statsFile << "blockHeight,blockTime,txId,isCoinBase,numVIn,totalVIn,numVOut,totalVOut,numJS,totalJSIn,totalJSOut,type" << std::endl;
+    statsFile << "blockHeight,blockTime,txId,isCoinBase,numVIn,totalVIn,numVOut,totalVOut,numJS,totalJSIn,totalJSOut,isSpendingCoinBase,type" << std::endl;
 
     for (int blockHeight = minBlockHeight; blockHeight <= maxBlockHeight; blockHeight++) {
         CBlock block;
@@ -684,6 +684,19 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
 
         for (const CTransaction& tx : block.vtx) {
             CAmount total_vIn = 0;
+            bool isSpendingCoinBase = false;
+            if (!tx.IsCoinBase()) {
+                for (CTxIn in : tx.vin) {
+                    uint256 prevHash = in.prevout.hash;
+                    uint32_t prevN = in.prevout.n;
+                    CTransaction prevTx;
+                    uint256 hashBlock;
+                    if (!GetTransaction(prevHash, prevTx, hashBlock, true))
+                        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
+                    total_vIn += prevTx.vout[prevN].nValue;
+                    isSpendingCoinBase |= prevTx.IsCoinBase();
+                }
+            }
             // TODO in
             CAmount total_vOut = 0;
             for (CTxOut out : tx.vout) {
@@ -704,11 +717,11 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
                 type = "tz";
             else
                 type = "zt";
-            statsFile << blockHeight << "," << block.GetBlockTime() << "," << tx.GetHash().GetHex() << "," << (tx.IsCoinBase() ? "true" : "false") << ","
-                      << tx.vin.size() << "," << total_vIn  << "X,"
+            statsFile << blockHeight << "," << block.GetBlockTime() << "," << tx.GetHash().GetHex() << "," << (tx.IsCoinBase() ? "true," : "false,")
+                      << tx.vin.size() << "," << total_vIn  << ","
                       << tx.vout.size() << "," << total_vOut << ","
                       << tx.vjoinsplit.size() << "," << total_jsIn << "," << total_jsOut << "," 
-                      << type << std::endl;
+                      << (isSpendingCoinBase ? "true," : "false,") << type << std::endl;
             ++txWritten;
         }
     }
