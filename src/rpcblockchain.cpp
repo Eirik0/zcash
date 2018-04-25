@@ -665,7 +665,7 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
 
     boost::filesystem::create_directories(outputFilePath);
     std::ofstream statsFile;
-    statsFile.open(outputFilePath + "/stats.txt", std::fstream::out);
+    statsFile.open(outputFilePath + "/zcash_stats" + std::to_string(minBlockHeight) + "-" + std::to_string(maxBlockHeight) + ".txt", std::fstream::out);
     
     int txWritten = 0;
     UniValue ret(UniValue::VOBJ);
@@ -697,7 +697,6 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
                     isSpendingCoinBase |= prevTx.IsCoinBase();
                 }
             }
-            // TODO in
             CAmount total_vOut = 0;
             for (CTxOut out : tx.vout) {
                 total_vOut += out.nValue;
