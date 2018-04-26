@@ -17,6 +17,7 @@
 #include <pwd.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <univalue.h>
@@ -641,13 +642,15 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
     if (fHelp || params.size() < 2 || params.size() > 3)
         throw runtime_error(
             "getblockstatistics ( outputFile minBlockHeight maxBlockHeight )\n"
-            "\nReturns statistics for a given block range.\n"
+            "\nGenerates a file with statistics for a given block range.\n"
             "\nArguments:\n"
             "1. outputFilePath    (string, required) A directory to put the file stats.txt in.\n"
             "2. minBlockHeight    (numeric, required) The minimum block height to return statistics for.\n"
             "3. maxBlockHeight    (numeric, optional) The maximum block height to return statistics for.\n"
         );
 
+    time_t start = clock();
+    
     LOCK(cs_main);
 
     std::string outputFilePath = params[0].get_str();
@@ -728,6 +731,7 @@ UniValue getblockstatistics(const UniValue& params, bool fHelp)
     statsFile.close();
 
     ret.push_back(Pair("num_txs", txWritten));
+    ret.push_back(Pair("time", std::to_string(difftime(clock(), start) / CLOCKS_PER_SEC) + "s"));
 
     return ret;
 }
