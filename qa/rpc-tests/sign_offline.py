@@ -7,13 +7,10 @@ class SignOfflineTest (BitcoinTestFramework):
 # Setup Methods
     def setup_chain(self):
         print "Initializing test directory " + self.options.tmpdir
-        initialize_chain_clean(self.options.tmpdir, 3)
+        initialize_chain_clean(self.options.tmpdir, 2)
 
     def setup_network(self):
-        self.nodes = [
-            start_node(0, self.options.tmpdir),
-            start_node(1, self.options.tmpdir)
-        ]
+        self.nodes = [ start_node(0, self.options.tmpdir) ]
         self.is_network_split = False
         self.sync_all()
 
@@ -22,9 +19,10 @@ class SignOfflineTest (BitcoinTestFramework):
         print "Mining blocks..."
         self.nodes[0].generate(101)
 
-        offline_node = start_node(2, self.options.tmpdir, ["-maxconnections=0"])
+        offline_node = start_node(1, self.options.tmpdir, ["-maxconnections=0"])
+        self.nodes.append(offline_node)
 
-        assert_equal(0, len(self.nodes[1].getpeerinfo())) # make sure node 1 has no peers
+        assert_equal(0, len(offline_node.getpeerinfo())) # make sure node 1 has no peers
 
         privkeys = [self.nodes[0].dumpprivkey(self.nodes[0].getnewaddress())]
         taddr = self.nodes[0].getnewaddress()
@@ -47,6 +45,7 @@ class SignOfflineTest (BitcoinTestFramework):
         signed_hex = signed_tx['hex']
         print "decoded:"
         print self.nodes[0].decoderawtransaction(signed_hex)
+        print "sent:"
         print self.nodes[0].sendrawtransaction(signed_hex)
 
 if __name__ == '__main__':
