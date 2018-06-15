@@ -10,7 +10,7 @@ class SignOfflineTest (BitcoinTestFramework):
         initialize_chain_clean(self.options.tmpdir, 2)
 
     def setup_network(self):
-        self.nodes = [ start_node(0, self.options.tmpdir) ]
+        self.nodes = [ start_node(0, self.options.tmpdir, ["-nuparams=5ba81b19:10"]) ]
         self.is_network_split = False
         self.sync_all()
 
@@ -19,7 +19,7 @@ class SignOfflineTest (BitcoinTestFramework):
         print "Mining blocks..."
         self.nodes[0].generate(101)
 
-        offline_node = start_node(1, self.options.tmpdir, ["-maxconnections=0"])
+        offline_node = start_node(1, self.options.tmpdir, ["-maxconnections=0", "-nuparams=5ba81b19:10"])
         self.nodes.append(offline_node)
 
         assert_equal(0, len(offline_node.getpeerinfo())) # make sure node 1 has no peers
