@@ -1,10 +1,10 @@
 #!/usr/bin/env python2
 
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import assert_equal, initialize_chain_clean, start_node
+from test_framework.util import assert_equal, connect_nodes_bi, initialize_chain_clean, start_node
 
 class SignOfflineTest (BitcoinTestFramework):
-# Setup Methods
+    # Setup Methods
     def setup_chain(self):
         print "Initializing test directory " + self.options.tmpdir
         initialize_chain_clean(self.options.tmpdir, 2)
@@ -32,7 +32,7 @@ class SignOfflineTest (BitcoinTestFramework):
         scriptpubkey = tx['scriptPubKey']
 
         create_inputs = [{'txid': txid, 'vout': 0}]
-        sign_inputs = [{'txid': txid, 'vout': 0, 'scriptPubKey': scriptpubkey}]
+        sign_inputs = [{'txid': txid, 'vout': 0, 'scriptPubKey': scriptpubkey, 'amount': 10}]
 
         create_hex = self.nodes[0].createrawtransaction(create_inputs, {taddr: 9.9999})
         print "create:"
@@ -43,8 +43,8 @@ class SignOfflineTest (BitcoinTestFramework):
         print signed_tx
 
         signed_hex = signed_tx['hex']
-        print "decoded:"
-        print self.nodes[0].decoderawtransaction(signed_hex)
+        #print "decoded:"
+        #print self.nodes[0].decoderawtransaction(signed_hex)
         print "sent:"
         print self.nodes[0].sendrawtransaction(signed_hex)
 
