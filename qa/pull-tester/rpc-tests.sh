@@ -21,6 +21,7 @@ testScripts=(
     'wallet_mergetoaddress.py'
     'wallet.py'
     'wallet_overwintertx.py'
+    'wallet_persistence.py'
     'wallet_nullifiers.py'
     'wallet_1941.py'
     'wallet_addresses.py'
