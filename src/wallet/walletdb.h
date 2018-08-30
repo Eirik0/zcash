@@ -133,7 +133,7 @@ public:
     static bool Recover(CDBEnv& dbenv, const std::string& filename);
 
     /// Write spending key to wallet database, where key is payment address and value is spending key.
-    bool WriteZKey(const libzcash::SproutPaymentAddress& addr, const libzcash::SproutSpendingKey& key, const CKeyMetadata &keyMeta);
+    bool WriteSproutZKey(const libzcash::SproutPaymentAddress& addr, const libzcash::SproutSpendingKey& key, const CKeyMetadata &keyMeta);
     bool WriteCryptedZKey(const libzcash::SproutPaymentAddress & addr,
                           const libzcash::ReceivingKey & rk,
                           const std::vector<unsigned char>& vchCryptedSecret,

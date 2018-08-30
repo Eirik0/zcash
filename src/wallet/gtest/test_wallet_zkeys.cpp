@@ -158,7 +158,7 @@ TEST(wallet_zkeys_tests, StoreAndLoadViewingKeys) {
 
 /**
  * This test covers methods on CWalletDB
- * WriteZKey()
+ * WriteSproutZKey()
  */
 TEST(wallet_zkeys_tests, write_zkey_direct_to_db) {
     SelectParams(CBaseChainParams::TESTNET);
@@ -194,7 +194,7 @@ TEST(wallet_zkeys_tests, write_zkey_direct_to_db) {
     int64_t now = GetTime();
     CKeyMetadata meta(now);
     CWalletDB db("wallet.dat");
-    db.WriteZKey(addr, sk, meta);
+    db.WriteSproutZKey(addr, sk, meta);
 
     // wallet should not be aware of key
     ASSERT_FALSE(wallet.HaveSproutSpendingKey(addr));

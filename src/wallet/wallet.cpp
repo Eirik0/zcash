@@ -163,9 +163,10 @@ bool CWallet::AddZKey(const libzcash::SproutSpendingKey &key)
         return true;
 
     if (!IsCrypted()) {
-        return CWalletDB(strWalletFile).WriteZKey(addr,
-                                                  key,
-                                                  mapZKeyMetadata[addr]);
+        return CWalletDB(strWalletFile).WriteSproutZKey(
+            addr,
+            key,
+            mapZKeyMetadata[addr]);
     }
     return true;
 }
