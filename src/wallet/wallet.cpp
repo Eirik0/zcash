@@ -254,15 +254,17 @@ bool CWallet::AddCryptedSproutSpendingKey(
     {
         LOCK(cs_wallet);
         if (pwalletdbEncryption) {
-            return pwalletdbEncryption->WriteCryptedZKey(address,
-                                                         rk,
-                                                         vchCryptedSecret,
-                                                         mapZKeyMetadata[address]);
+            return pwalletdbEncryption->WriteCryptedSproutZKey(
+                address,
+                rk,
+                vchCryptedSecret,
+                mapZKeyMetadata[address]);
         } else {
-            return CWalletDB(strWalletFile).WriteCryptedZKey(address,
-                                                             rk,
-                                                             vchCryptedSecret,
-                                                             mapZKeyMetadata[address]);
+            return CWalletDB(strWalletFile).WriteCryptedSproutZKey(
+                address,
+                rk,
+                vchCryptedSecret,
+                mapZKeyMetadata[address]);
         }
     }
     return false;

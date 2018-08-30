@@ -105,11 +105,12 @@ bool CWalletDB::WriteCryptedKey(const CPubKey& vchPubKey,
     return true;
 }
 
-bool CWalletDB::WriteCryptedZKey(const libzcash::SproutPaymentAddress & addr,
-                                 const libzcash::ReceivingKey &rk,
-                                 const std::vector<unsigned char>& vchCryptedSecret,
-                                 const CKeyMetadata &keyMeta)
-{
+bool CWalletDB::WriteCryptedSproutZKey(
+    const libzcash::SproutPaymentAddress & addr,
+    const libzcash::ReceivingKey &rk,
+    const std::vector<unsigned char>& vchCryptedSecret,
+    const CKeyMetadata &keyMeta
+) {
     const bool fEraseUnencryptedKey = true;
     nWalletDBUpdated++;
 
