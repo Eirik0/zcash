@@ -405,7 +405,7 @@ BOOST_AUTO_TEST_CASE(rpc_wallet_z_exportwallet)
     BOOST_CHECK(addrs.size()==0);
 
     // wallet should have one key
-    auto address = pwalletMain->GenerateNewZKey();
+    auto address = pwalletMain->GenerateNewSproutZKey();
     BOOST_CHECK(IsValidPaymentAddress(address));
     BOOST_ASSERT(boost::get<libzcash::SproutPaymentAddress>(&address) != nullptr);
     auto addr = boost::get<libzcash::SproutPaymentAddress>(address);
@@ -602,7 +602,7 @@ BOOST_AUTO_TEST_CASE(rpc_wallet_z_importexport)
 
     // Make new addresses for the set
     for (int i=0; i<n2; i++) {
-        myaddrs.insert(EncodePaymentAddress(pwalletMain->GenerateNewZKey()));
+        myaddrs.insert(EncodePaymentAddress(pwalletMain->GenerateNewSproutZKey()));
     }
 
     // Verify number of addresses stored in wallet is n1+n2
@@ -955,7 +955,7 @@ BOOST_AUTO_TEST_CASE(rpc_z_sendmany_parameters)
     std::vector<char> v (2 * (ZC_MEMO_SIZE+1));     // x2 for hexadecimal string format
     std::fill(v.begin(),v.end(), 'A');
     std::string badmemo(v.begin(), v.end());
-    auto pa = pwalletMain->GenerateNewZKey();
+    auto pa = pwalletMain->GenerateNewSproutZKey();
     std::string zaddr1 = EncodePaymentAddress(pa);
     BOOST_CHECK_THROW(CallRPC(string("z_sendmany tmRr6yJonqGK23UVhrKuyvTpF8qxQQjKigJ ")
             + "[{\"address\":\"" + zaddr1 + "\", \"amount\":123.456}]"), runtime_error);
@@ -1033,7 +1033,7 @@ BOOST_AUTO_TEST_CASE(rpc_z_sendmany_internals)
     // add keys manually
     BOOST_CHECK_NO_THROW(retValue = CallRPC("getnewaddress"));
     std::string taddr1 = retValue.get_str();
-    auto pa = pwalletMain->GenerateNewZKey();
+    auto pa = pwalletMain->GenerateNewSproutZKey();
     std::string zaddr1 = EncodePaymentAddress(pa);
 
     // there are no utxos to spend
@@ -1456,7 +1456,7 @@ BOOST_AUTO_TEST_CASE(rpc_z_shieldcoinbase_internals)
     mapArgs["-mempooltxinputlimit"] = "1";
 
     // Add keys manually
-    auto pa = pwalletMain->GenerateNewZKey();
+    auto pa = pwalletMain->GenerateNewSproutZKey();
     std::string zaddr = EncodePaymentAddress(pa);
 
     // Supply 2 inputs when mempool limit is 1
@@ -1581,7 +1581,7 @@ BOOST_AUTO_TEST_CASE(rpc_z_mergetoaddress_parameters)
     std::vector<char> v (2 * (ZC_MEMO_SIZE+1));     // x2 for hexadecimal string format
     std::fill(v.begin(),v.end(), 'A');
     std::string badmemo(v.begin(), v.end());
-    auto pa = pwalletMain->GenerateNewZKey();
+    auto pa = pwalletMain->GenerateNewSproutZKey();
     std::string zaddr1 = EncodePaymentAddress(pa);
     BOOST_CHECK_THROW(CallRPC(string("z_mergetoaddress [\"tmRr6yJonqGK23UVhrKuyvTpF8qxQQjKigJ\"] ")
             + zaddr1 + " 0.0001 100 100 " + badmemo), runtime_error);
@@ -1652,7 +1652,7 @@ BOOST_AUTO_TEST_CASE(rpc_z_mergetoaddress_internals)
     // Add keys manually
     BOOST_CHECK_NO_THROW(retValue = CallRPC("getnewaddress"));
     MergeToAddressRecipient taddr1(retValue.get_str(), "");
-    auto pa = pwalletMain->GenerateNewZKey();
+    auto pa = pwalletMain->GenerateNewSproutZKey();
     MergeToAddressRecipient zaddr1(EncodePaymentAddress(pa), "DEADBEEF");
 
     // Supply 2 inputs when mempool limit is 1

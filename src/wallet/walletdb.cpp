@@ -132,15 +132,25 @@ bool CWalletDB::WriteMasterKey(unsigned int nID, const CMasterKey& kMasterKey)
     return Write(std::make_pair(std::string("mkey"), nID), kMasterKey, true);
 }
 
-bool CWalletDB::WriteSproutZKey(const libzcash::SproutPaymentAddress& addr, const libzcash::SproutSpendingKey& key, const CKeyMetadata &keyMeta)
-{
+template<typename PaymentAddress, typename SpendingKey>
+bool CWalletDB::WriteZKey(const PaymentAddress& addr, const SpendingKey& key, const CKeyMetadata &keyMeta, const std::string& metaDbStr, const std::string& keyDbStr) {
     nWalletDBUpdated++;
 
-    if (!Write(std::make_pair(std::string("zkeymeta"), addr), keyMeta))
+    if (!Write(std::make_pair(metaDbStr, addr), keyMeta))
         return false;
 
-    // pair is: tuple_key("zkey", paymentaddress) --> secretkey
-    return Write(std::make_pair(std::string("zkey"), addr), key, false);
+    // pair is: tuple_key(keyDbStr, PaymentAddress) --> SpendingKey
+    return Write(std::make_pair(keyDbStr, addr), key, false);
+}
+
+bool CWalletDB::WriteSproutZKey(const libzcash::SproutPaymentAddress& addr, const libzcash::SproutSpendingKey& key, const CKeyMetadata &keyMeta)
+{
+    return WriteZKey(addr, key, keyMeta, "zkey", "zkeymeta");
+}
+
+bool CWalletDB::WriteSaplingZKey(const libzcash::SaplingPaymentAddress& addr, const libzcash::SaplingSpendingKey& key, const CKeyMetadata &keyMeta)
+{
+    return WriteZKey(addr, key, keyMeta, "zskey", "zskeymeta");
 }
 
 bool CWalletDB::WriteSproutViewingKey(const libzcash::SproutViewingKey &vk)
@@ -504,9 +514,9 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             libzcash::SproutSpendingKey key;
             ssValue >> key;
 
-            if (!pwallet->LoadZKey(key))
+            if (!pwallet->LoadSproutZKey(key))
             {
-                strErr = "Error reading wallet database: LoadZKey failed";
+                strErr = "Error reading wallet database: LoadSproutZKey failed";
                 return false;
             }
 
@@ -618,9 +628,9 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             ssValue >> vchCryptedSecret;
             wss.nCKeys++;
 
-            if (!pwallet->LoadCryptedZKey(addr, rk, vchCryptedSecret))
+            if (!pwallet->LoadCryptedSproutZKey(addr, rk, vchCryptedSecret))
             {
-                strErr = "Error reading wallet database: LoadCryptedZKey failed";
+                strErr = "Error reading wallet database: LoadCryptedSproutZKey failed";
                 return false;
             }
             wss.fIsEncrypted = true;
@@ -648,7 +658,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             ssValue >> keyMeta;
             wss.nZKeyMeta++;
 
-            pwallet->LoadZKeyMetadata(addr, keyMeta);
+            pwallet->LoadSproutZKeyMetadata(addr, keyMeta);
 
             // ignore earliest key creation time as taddr will exist before any zaddr
         }

@@ -131,9 +131,26 @@ public:
     DBErrors ZapWalletTx(CWallet* pwallet, std::vector<CWalletTx>& vWtx);
     static bool Recover(CDBEnv& dbenv, const std::string& filename, bool fOnlyKeys);
     static bool Recover(CDBEnv& dbenv, const std::string& filename);
-
+    
+    template<typename PaymentAddress, typename SpendingKey>
+    bool WriteZKey(
+        const PaymentAddress& addr,
+        const SpendingKey& key,
+        const CKeyMetadata &keyMeta,
+        const std::string& metaDbStr,
+        const std::string& keyDbStr
+    );
     /// Write spending key to wallet database, where key is payment address and value is spending key.
-    bool WriteSproutZKey(const libzcash::SproutPaymentAddress& addr, const libzcash::SproutSpendingKey& key, const CKeyMetadata &keyMeta);
+    bool WriteSproutZKey(
+        const libzcash::SproutPaymentAddress& addr, 
+        const libzcash::SproutSpendingKey& key, 
+        const CKeyMetadata &keyMeta
+    );
+    bool WriteSaplingZKey(
+        const libzcash::SaplingPaymentAddress& addr, 
+        const libzcash::SaplingSpendingKey& key,
+        const CKeyMetadata &keyMeta
+    );
     bool WriteCryptedSproutZKey(
         const libzcash::SproutPaymentAddress & addr,
         const libzcash::ReceivingKey & rk,
@@ -143,6 +160,7 @@ public:
 
     bool WriteSproutViewingKey(const libzcash::SproutViewingKey &vk);
     bool EraseSproutViewingKey(const libzcash::SproutViewingKey &vk);
+    
 
 private:
     CWalletDB(const CWalletDB&);

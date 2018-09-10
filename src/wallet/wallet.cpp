@@ -80,7 +80,7 @@ const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
 }
 
 // Generate a new spending key and return its public payment address
-libzcash::PaymentAddress CWallet::GenerateNewZKey()
+libzcash::PaymentAddress CWallet::GenerateNewSproutZKey()
 {
     AssertLockHeld(cs_wallet); // mapZKeyMetadata
     // TODO: Add Sapling support
@@ -89,14 +89,14 @@ libzcash::PaymentAddress CWallet::GenerateNewZKey()
 
     // Check for collision, even though it is unlikely to ever occur
     if (CCryptoKeyStore::HaveSproutSpendingKey(addr))
-        throw std::runtime_error("CWallet::GenerateNewZKey(): Collision detected");
+        throw std::runtime_error("CWallet::GenerateNewSproutZKey(): Collision detected");
 
     // Create new metadata
     int64_t nCreationTime = GetTime();
     mapZKeyMetadata[addr] = CKeyMetadata(nCreationTime);
 
-    if (!AddZKey(k))
-        throw std::runtime_error("CWallet::GenerateNewZKey(): AddZKey failed");
+    if (!AddSproutZKey(k))
+        throw std::runtime_error("CWallet::GenerateNewSproutZKey(): AddSproutZKey failed");
     return addr;
 }
 
@@ -125,7 +125,7 @@ SaplingPaymentAddress CWallet::GenerateNewSaplingZKey()
     return addr;
 }
 
-// Add spending key to keystore 
+// Add spending key to keystore and persist to disk
 bool CWallet::AddSaplingZKey(
     const libzcash::SaplingSpendingKey &sk,
     const boost::optional<libzcash::SaplingPaymentAddress> &defaultAddr)
@@ -140,14 +140,23 @@ bool CWallet::AddSaplingZKey(
         return true;
     }
 
-    // TODO: Persist to disk
-    
+    // If we don't have the address, don't bother persisting to disk
+    if (!defaultAddr) {
+        return true;
+    }
+
+    if (!IsCrypted()) {
+        libzcash::SaplingPaymentAddress addr = defaultAddr.get();
+        return CWalletDB(strWalletFile).WriteSaplingZKey(
+            addr,
+            sk,
+            mapSaplingZKeyMetadata[addr]);
+    }
     return true;
 }
 
-
 // Add spending key to keystore and persist to disk
-bool CWallet::AddZKey(const libzcash::SproutSpendingKey &key)
+bool CWallet::AddSproutZKey(const libzcash::SproutSpendingKey &key)
 {
     AssertLockHeld(cs_wallet); // mapZKeyMetadata
     auto addr = key.address();
@@ -294,7 +303,7 @@ bool CWallet::LoadKeyMetadata(const CPubKey &pubkey, const CKeyMetadata &meta)
     return true;
 }
 
-bool CWallet::LoadZKeyMetadata(const SproutPaymentAddress &addr, const CKeyMetadata &meta)
+bool CWallet::LoadSproutZKeyMetadata(const SproutPaymentAddress &addr, const CKeyMetadata &meta)
 {
     AssertLockHeld(cs_wallet); // mapZKeyMetadata
     mapZKeyMetadata[addr] = meta;
@@ -306,12 +315,12 @@ bool CWallet::LoadCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigne
     return CCryptoKeyStore::AddCryptedKey(vchPubKey, vchCryptedSecret);
 }
 
-bool CWallet::LoadCryptedZKey(const libzcash::SproutPaymentAddress &addr, const libzcash::ReceivingKey &rk, const std::vector<unsigned char> &vchCryptedSecret)
+bool CWallet::LoadCryptedSproutZKey(const libzcash::SproutPaymentAddress &addr, const libzcash::ReceivingKey &rk, const std::vector<unsigned char> &vchCryptedSecret)
 {
     return CCryptoKeyStore::AddCryptedSproutSpendingKey(addr, rk, vchCryptedSecret);
 }
 
-bool CWallet::LoadZKey(const libzcash::SproutSpendingKey &key)
+bool CWallet::LoadSproutZKey(const libzcash::SproutSpendingKey &key)
 {
     return CCryptoKeyStore::AddSproutSpendingKey(key);
 }

@@ -3141,7 +3141,7 @@ UniValue z_getnewaddress(const UniValue& params, bool fHelp)
         GetBoolArg("-experimentalfeatures", false) &&
         GetBoolArg("-developersapling", false));
     if (addrType == ADDR_TYPE_SPROUT) {
-        return EncodePaymentAddress(pwalletMain->GenerateNewZKey());
+        return EncodePaymentAddress(pwalletMain->GenerateNewSproutZKey());
     } else if (addrType == ADDR_TYPE_SAPLING && allowSapling) {
         return EncodePaymentAddress(pwalletMain->GenerateNewSaplingZKey());
     } else {
