@@ -142,6 +142,19 @@ bool CWalletDB::WriteZKey(const libzcash::SproutPaymentAddress& addr, const libz
     return Write(std::make_pair(std::string("zkey"), addr), key, false);
 }
 
+bool CWalletDB::WriteSaplingZKey(const boost::optional<libzcash::SaplingPaymentAddress> &ivk,
+                const libzcash::SaplingExtendedSpendingKey &key,
+                const CKeyMetadata &keyMeta)
+{
+    nWalletDBUpdated++;
+    //std::cout<< "Disk ..."<<endl;
+    
+    if (!Write(std::make_pair(std::string("sapzkmeta"), ivk), keyMeta))
+        return false;
+
+    return Write(std::make_pair(std::string("sapzkey"), ivk), key, false);
+}
+
 bool CWalletDB::WriteSproutViewingKey(const libzcash::SproutViewingKey &vk)
 {
     nWalletDBUpdated++;
@@ -511,6 +524,23 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
 
             wss.nZKeys++;
         }
+        else if (strType == "sapzkey")
+        {
+            libzcash::SaplingIncomingViewingKey ivk;
+            ssKey >> ivk;
+            libzcash::SaplingExtendedSpendingKey key;
+            ssValue >> key;
+
+            if (!pwallet->LoadSaplingZKey(key))
+            {
+                strErr = "Error reading wallet database: LoadSaplingZKey failed";
+                return false;
+            }
+
+            //add checks for integrity
+            wss.nZKeys++;
+        }
+
         else if (strType == "key" || strType == "wkey")
         {
             CPubKey vchPubKey;
