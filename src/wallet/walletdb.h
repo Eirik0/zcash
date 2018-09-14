@@ -184,7 +184,7 @@ public:
 
     /// Write spending key to wallet database, where key is payment address and value is spending key.
     bool WriteZKey(const libzcash::SproutPaymentAddress& addr, const libzcash::SproutSpendingKey& key, const CKeyMetadata &keyMeta);
-    bool WriteSaplingZKey(const boost::optional<libzcash::SaplingPaymentAddress> &ivk,
+    bool WriteSaplingZKey(const libzcash::SaplingIncomingViewingKey &ivk,
                           const libzcash::SaplingExtendedSpendingKey &key,
                           const CKeyMetadata  &keyMeta);
     bool WriteCryptedZKey(const libzcash::SproutPaymentAddress & addr,

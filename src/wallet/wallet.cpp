@@ -169,7 +169,7 @@ bool CWallet::AddSaplingZKey(
     // TODO: Persist to disk
     if (!IsCrypted()) {
         auto ivk = sk.expsk.full_viewing_key().in_viewing_key();
-        return CWalletDB(strWalletFile).WriteSaplingZKey(defaultAddr,sk, mapSaplingZKeyMetadata[ivk]); 
+        return CWalletDB(strWalletFile).WriteSaplingZKey(ivk,sk, mapSaplingZKeyMetadata[ivk]); 
     }
     
     return true;
@@ -350,10 +350,9 @@ bool CWallet::LoadCryptedZKey(const libzcash::SproutPaymentAddress &addr, const 
 {
     return CCryptoKeyStore::AddCryptedSproutSpendingKey(addr, rk, vchCryptedSecret);
 }
-bool CWallet::LoadCryptedSaplingZKey(const libzcash::SaplingFullViewingKey &fvk, const std::vector<unsigned char> &vchCryptedSecret)//, const boost::optional<libzcash::SaplingPaymentAddress> &defaultAddr = boost::none)
-{
-    
-     return CCryptoKeyStore::AddCryptedSaplingSpendingKey(fvk, vchCryptedSecret);//, defaultAddr);
+bool CWallet::LoadCryptedSaplingZKey(const libzcash::SaplingFullViewingKey &fvk, const std::vector<unsigned char> &vchCryptedSecret)
+{    
+     return CCryptoKeyStore::AddCryptedSaplingSpendingKey(fvk, vchCryptedSecret);
 }
 bool CWallet::LoadSaplingZKeyMetadata(const libzcash::SaplingIncomingViewingKey &ivk, const CKeyMetadata &meta)
 {
