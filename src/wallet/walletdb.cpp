@@ -124,7 +124,25 @@ bool CWalletDB::WriteCryptedZKey(const libzcash::SproutPaymentAddress & addr,
     }
     return true;
 }
+bool CWalletDB::WriteCryptedSaplingZKey(const boost::optional<libzcash::SaplingPaymentAddress> &defaultAddr,
+                          const libzcash::SaplingFullViewingKey &fvk,
+                          const std::vector<unsigned char>& vchCryptedSecret,
+                          const CKeyMetadata &keyMeta)
+{
+    const bool fEraseUnencryptedKey = true;
+    nWalletDBUpdated++;
 
+    if (!Write(std::make_pair(std::string("sapzkeymeta"), fvk.in_viewing_key()), keyMeta))
+        return false;
+
+    if (!Write(std::make_pair(std::string("csapzkey"), fvk.in_viewing_key()), std::make_pair(fvk, vchCryptedSecret), false))
+        return false;
+    if (fEraseUnencryptedKey)
+    {
+        Erase(std::make_pair(std::string("sapzkey"), fvk.in_viewing_key()));
+    }
+    return true;
+}
 bool CWalletDB::WriteMasterKey(unsigned int nID, const CMasterKey& kMasterKey)
 {
     nWalletDBUpdated++;
