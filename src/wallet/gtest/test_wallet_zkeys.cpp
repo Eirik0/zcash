@@ -363,4 +363,3 @@ TEST(wallet_zkeys_tests, write_cryptedzkey_direct_to_db) {
     ASSERT_EQ(paymentAddress2, keyOut.address());
 }
 
-

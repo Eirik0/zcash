@@ -2021,14 +2021,12 @@ bool CWallet::SetHDSeed(const HDSeed& seed)
         return true;
     }
 
-    /* TODO: Uncomment during PR for #3388
     {
         LOCK(cs_wallet);
         if (!IsCrypted()) {
             return CWalletDB(strWalletFile).WriteHDSeed(seed);
         }
     }
-    */
     return true;
 }
 
@@ -2042,7 +2040,6 @@ bool CWallet::SetCryptedHDSeed(const uint256& seedFp, const std::vector<unsigned
         return true;
     }
 
-    /* TODO: Uncomment during PR for #3388
     {
         LOCK(cs_wallet);
         if (pwalletdbEncryption)
@@ -2050,17 +2047,14 @@ bool CWallet::SetCryptedHDSeed(const uint256& seedFp, const std::vector<unsigned
         else
             return CWalletDB(strWalletFile).WriteCryptedHDSeed(seedFp, vchCryptedSecret);
     }
-    */
     return false;
 }
 
 void CWallet::SetHDChain(const CHDChain& chain, bool memonly)
 {
     LOCK(cs_wallet);
-    /* TODO: Uncomment during PR for #3388
     if (!memonly && fFileBacked && !CWalletDB(strWalletFile).WriteHDChain(chain))
         throw std::runtime_error(std::string(__func__) + ": writing chain failed");
-    */
 
     hdChain = chain;
 }
