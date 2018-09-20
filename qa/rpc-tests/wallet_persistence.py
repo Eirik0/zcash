@@ -14,6 +14,7 @@ class WalletPersistenceTest (BitcoinTestFramework):
         addresses = self.nodes[0].z_listaddresses()
         # make sure the node has the addresss
         assert_true(sapling_addr in addresses, "Should contain address before restart")
+        
         # restart the nodes
         stop_nodes(self.nodes)
         wait_bitcoinds()
@@ -21,6 +22,11 @@ class WalletPersistenceTest (BitcoinTestFramework):
         addresses = self.nodes[0].z_listaddresses()
         # make sure we still have the address after restarting
         assert_true(sapling_addr in addresses, "Should contain address after restart")
+
+    def setup_network(self, split=False):
+        self.nodes = start_nodes(1, self.options.tmpdir)
+        self.is_network_split = False
+        self.sync_all()
 
 if __name__ == '__main__':
     WalletPersistenceTest().main()

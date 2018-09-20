@@ -169,7 +169,7 @@ bool CWallet::AddSaplingZKey(
     // TODO: Persist to disk
     if (!IsCrypted()) {
         auto ivk = sk.expsk.full_viewing_key().in_viewing_key();
-        return CWalletDB(strWalletFile).WriteSaplingZKey(ivk,sk, mapSaplingZKeyMetadata[ivk]); 
+        return CWalletDB(strWalletFile).WriteSaplingZKey(ivk,sk, mapSaplingZKeyMetadata[ivk],defaultAddr); 
     }
     
     return true;
@@ -307,16 +307,13 @@ bool CWallet::AddCryptedSaplingSpendingKey(const libzcash::SaplingFullViewingKey
         return true;
     {
         // TODO: Sapling - Write to disk
-        std::cout<<"In AddCryptedSaplingSpendingKey() -----------> [-]"<<endl;
         LOCK(cs_wallet);
         if (pwalletdbEncryption) {
-            return pwalletdbEncryption->WriteCryptedSaplingZKey(defaultAddr,
-                                                         fvk,
+            return pwalletdbEncryption->WriteCryptedSaplingZKey(fvk,
                                                          vchCryptedSecret,
                                                          mapSaplingZKeyMetadata[fvk.in_viewing_key()]);
         } else {
-            return CWalletDB(strWalletFile).WriteCryptedSaplingZKey(defaultAddr,
-                                                         fvk,
+            return CWalletDB(strWalletFile).WriteCryptedSaplingZKey(fvk,
                                                          vchCryptedSecret,
                                                          mapSaplingZKeyMetadata[fvk.in_viewing_key()]);
         }
@@ -362,7 +359,7 @@ bool CWallet::LoadSaplingZKeyMetadata(const libzcash::SaplingIncomingViewingKey 
 }
 bool CWallet::LoadSaplingZKey(const libzcash::SaplingExtendedSpendingKey &key)
 {
-    return CCryptoKeyStore::AddSaplingSpendingKey(key);
+    return CCryptoKeyStore::AddSaplingSpendingKey(key, key.DefaultAddress());
 }
 bool CWallet::LoadZKey(const libzcash::SproutSpendingKey &key)
 {

@@ -287,6 +287,10 @@ public:
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
+        int nVersion = s.GetVersion();
+        if (!(s.GetType() & SER_GETHASH)) {
+            READWRITE(nVersion);
+        }
         READWRITE(ivk);
         READWRITE(nullifier);
         READWRITE(witnesses);
@@ -519,7 +523,11 @@ public:
         READWRITE(nTimeReceived);
         READWRITE(fFromMe);
         READWRITE(fSpent);
-        READWRITE(mapSaplingNoteData);
+
+        if (fOverwintered && nVersion >= SAPLING_TX_VERSION) 
+        {
+            READWRITE(mapSaplingNoteData);                
+        }
 
         if (ser_action.ForRead())
         {
