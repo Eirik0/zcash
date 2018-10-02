@@ -166,7 +166,6 @@ bool CWallet::AddSaplingZKey(
         return true;
     }
 
-    // TODO: Persist to disk
     if (!IsCrypted()) {
         auto ivk = sk.expsk.full_viewing_key().in_viewing_key();
         return CWalletDB(strWalletFile).WriteSaplingZKey(ivk,sk, mapSaplingZKeyMetadata[ivk],defaultAddr); 
@@ -306,7 +305,6 @@ bool CWallet::AddCryptedSaplingSpendingKey(const libzcash::SaplingFullViewingKey
     if (!fFileBacked)
         return true;
     {
-        // TODO: Sapling - Write to disk
         LOCK(cs_wallet);
         if (pwalletdbEncryption) {
             return pwalletdbEncryption->WriteCryptedSaplingZKey(fvk,

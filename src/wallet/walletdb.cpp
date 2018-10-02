@@ -165,7 +165,7 @@ bool CWalletDB::WriteSaplingZKey(const libzcash::SaplingIncomingViewingKey &ivk,
 {
     nWalletDBUpdated++;
     
-    if (!Write(std::make_pair(std::string("sapzkmeta"), ivk), keyMeta))
+    if (!Write(std::make_pair(std::string("sapzkeymeta"), ivk), keyMeta))
         return false;
 
     return Write(std::make_pair(std::string("sapzkey"), defaultAddr), key, false);
