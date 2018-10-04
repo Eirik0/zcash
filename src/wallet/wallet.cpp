@@ -168,7 +168,7 @@ bool CWallet::AddSaplingZKey(
 
     if (!IsCrypted()) {
         auto ivk = sk.expsk.full_viewing_key().in_viewing_key();
-        return CWalletDB(strWalletFile).WriteSaplingZKey(ivk,sk, mapSaplingZKeyMetadata[ivk],defaultAddr); 
+        return CWalletDB(strWalletFile).WriteSaplingZKey(defaultAddr, ivk, sk, mapSaplingZKeyMetadata[ivk]); 
     }
     
     return true;
@@ -307,11 +307,13 @@ bool CWallet::AddCryptedSaplingSpendingKey(const libzcash::SaplingFullViewingKey
     {
         LOCK(cs_wallet);
         if (pwalletdbEncryption) {
-            return pwalletdbEncryption->WriteCryptedSaplingZKey(fvk,
+            return pwalletdbEncryption->WriteCryptedSaplingZKey(defaultAddr,
+                                                         fvk,
                                                          vchCryptedSecret,
                                                          mapSaplingZKeyMetadata[fvk.in_viewing_key()]);
         } else {
-            return CWalletDB(strWalletFile).WriteCryptedSaplingZKey(fvk,
+            return CWalletDB(strWalletFile).WriteCryptedSaplingZKey(defaultAddr,
+                                                         fvk,
                                                          vchCryptedSecret,
                                                          mapSaplingZKeyMetadata[fvk.in_viewing_key()]);
         }
@@ -345,9 +347,9 @@ bool CWallet::LoadCryptedZKey(const libzcash::SproutPaymentAddress &addr, const 
 {
     return CCryptoKeyStore::AddCryptedSproutSpendingKey(addr, rk, vchCryptedSecret);
 }
-bool CWallet::LoadCryptedSaplingZKey(const libzcash::SaplingFullViewingKey &fvk, const std::vector<unsigned char> &vchCryptedSecret)
+bool CWallet::LoadCryptedSaplingZKey(const libzcash::SaplingFullViewingKey &fvk, const std::vector<unsigned char> &vchCryptedSecret, const libzcash::SaplingPaymentAddress &addr)
 {    
-     return CCryptoKeyStore::AddCryptedSaplingSpendingKey(fvk, vchCryptedSecret);
+     return CCryptoKeyStore::AddCryptedSaplingSpendingKey(fvk, vchCryptedSecret, addr);
 }
 bool CWallet::LoadSaplingZKeyMetadata(const libzcash::SaplingIncomingViewingKey &ivk, const CKeyMetadata &meta)
 {
@@ -355,9 +357,9 @@ bool CWallet::LoadSaplingZKeyMetadata(const libzcash::SaplingIncomingViewingKey 
     mapSaplingZKeyMetadata[ivk] = meta;
     return true;
 }
-bool CWallet::LoadSaplingZKey(const libzcash::SaplingExtendedSpendingKey &key)
+bool CWallet::LoadSaplingZKey(const libzcash::SaplingExtendedSpendingKey &key, const libzcash::SaplingPaymentAddress &addr )
 {
-    return CCryptoKeyStore::AddSaplingSpendingKey(key, key.DefaultAddress());
+    return CCryptoKeyStore::AddSaplingSpendingKey(key, addr);
 }
 bool CWallet::LoadZKey(const libzcash::SproutSpendingKey &key)
 {
@@ -3547,7 +3549,6 @@ DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
             // that requires a new key.
         }
     }
-
     if (nLoadWalletRet != DB_LOAD_OK)
         return nLoadWalletRet;
     fFirstRunRet = !vchDefaultKey.IsValid();

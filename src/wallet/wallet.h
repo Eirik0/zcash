@@ -1081,12 +1081,13 @@ public:
         const std::vector<unsigned char> &vchCryptedSecret,
         const libzcash::SaplingPaymentAddress &defaultAddr);
     //! Adds spending key to the store, without saving it to disk (used by LoadWallet)
-    bool LoadSaplingZKey(const libzcash::SaplingExtendedSpendingKey &key);
+    bool LoadSaplingZKey(const libzcash::SaplingExtendedSpendingKey &key, const libzcash::SaplingPaymentAddress &addr);
     //! Load spending key metadata (used by LoadWallet)
     bool LoadSaplingZKeyMetadata(const libzcash::SaplingIncomingViewingKey &ivk, const CKeyMetadata &meta);
     //! Adds an encrypted spending key to the store, without saving it to disk (used by LoadWallet)
     bool LoadCryptedSaplingZKey(const libzcash::SaplingFullViewingKey &fvk, 
-                                const std::vector<unsigned char> &vchCryptedSecret);
+                                const std::vector<unsigned char> &vchCryptedSecret,
+                                const libzcash::SaplingPaymentAddress &addr);
 
     /** 
      * Increment the next transaction order id

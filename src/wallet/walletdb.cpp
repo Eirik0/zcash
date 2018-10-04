@@ -124,21 +124,22 @@ bool CWalletDB::WriteCryptedZKey(const libzcash::SproutPaymentAddress & addr,
     }
     return true;
 }
-bool CWalletDB::WriteCryptedSaplingZKey(const libzcash::SaplingFullViewingKey &fvk,
+bool CWalletDB::WriteCryptedSaplingZKey(const libzcash::SaplingPaymentAddress &addr,
+                          const libzcash::SaplingFullViewingKey &fvk,
                           const std::vector<unsigned char>& vchCryptedSecret,
                           const CKeyMetadata &keyMeta)
 {
     const bool fEraseUnencryptedKey = true;
     nWalletDBUpdated++;
 
-    if (!Write(std::make_pair(std::string("sapzkeymeta"), fvk.in_viewing_key()), keyMeta))
+    if (!Write(std::make_pair(std::string("sapzkeymeta"), addr), keyMeta))
         return false;
 
-    if (!Write(std::make_pair(std::string("csapzkey"), fvk.in_viewing_key()), std::make_pair(fvk, vchCryptedSecret), false))
+    if (!Write(std::make_pair(std::string("csapzkey"), addr), std::make_pair(fvk, vchCryptedSecret), false))
         return false;
     if (fEraseUnencryptedKey)
     {
-        Erase(std::make_pair(std::string("sapzkey"), fvk.in_viewing_key()));
+        Erase(std::make_pair(std::string("sapzkey"), addr));
     }
     return true;
 }
@@ -158,14 +159,14 @@ bool CWalletDB::WriteZKey(const libzcash::SproutPaymentAddress& addr, const libz
     // pair is: tuple_key("zkey", paymentaddress) --> secretkey
     return Write(std::make_pair(std::string("zkey"), addr), key, false);
 }
-bool CWalletDB::WriteSaplingZKey(const libzcash::SaplingIncomingViewingKey &ivk,
-                const libzcash::SaplingExtendedSpendingKey &key,
-                const CKeyMetadata &keyMeta,
-                const boost::optional<libzcash::SaplingPaymentAddress> &defaultAddr)
+bool CWalletDB::WriteSaplingZKey(const libzcash::SaplingPaymentAddress &defaultAddr,
+                                const libzcash::SaplingIncomingViewingKey &ivk,
+                                const libzcash::SaplingExtendedSpendingKey &key,
+                                const CKeyMetadata &keyMeta )
 {
     nWalletDBUpdated++;
     
-    if (!Write(std::make_pair(std::string("sapzkeymeta"), ivk), keyMeta))
+    if (!Write(std::make_pair(std::string("sapzkeymeta"), defaultAddr ), keyMeta))
         return false;
 
     return Write(std::make_pair(std::string("sapzkey"), defaultAddr), key, false);
@@ -542,12 +543,12 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "sapzkey")
         {
-            libzcash::SaplingIncomingViewingKey ivk;
-            ssKey >> ivk;
+            libzcash::SaplingPaymentAddress addr;
+            ssKey >> addr;
             libzcash::SaplingExtendedSpendingKey key;
             ssValue >> key;
 
-            if (!pwallet->LoadSaplingZKey(key))
+            if (!pwallet->LoadSaplingZKey(key, addr))
             {
                 strErr = "Error reading wallet database: LoadSaplingZKey failed";
                 return false;
@@ -672,13 +673,15 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
         }
         else if (strType == "csapzkey")
         {
+            libzcash::SaplingPaymentAddress addr;
+            ssKey >> addr;
             libzcash::SaplingFullViewingKey fvk;
-            ssKey >> fvk;
+            ssValue >> fvk;
             vector<unsigned char> vchCryptedSecret;
             ssValue >> vchCryptedSecret;
             wss.nCKeys++;
 
-            if (!pwallet->LoadCryptedSaplingZKey(fvk,vchCryptedSecret))
+            if (!pwallet->LoadCryptedSaplingZKey(fvk ,vchCryptedSecret, addr ))
             {
                 strErr = "Error reading wallet database: LoadCryptedSaplingZKey failed";
                 return false;
@@ -882,7 +885,10 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
                 // losing keys is considered a catastrophic error, anything else
                 // we assume the user can live with:
                 if (IsKeyType(strType))
+                {
+                    std::cout<<"IN IS KEYTYPE "<<strType<<"   "<<strErr<<std::endl;
                     result = DB_CORRUPT;
+                }
                 else
                 {
                     // Leave other errors alone, if we try to fix them we might make things worse.
