@@ -69,6 +69,7 @@ testScripts=(
     'p2p_node_bloom.py'
     'regtest_signrawtransaction.py'
     'finalsaplingroot.py'
+    'zcbenchmarks.py'
 );
 testScriptsExt=(
     'getblocktemplate_longpoll.py'
